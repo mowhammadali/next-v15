@@ -1,28 +1,52 @@
 import Link from "next/link";
-import React from "react";
-
-const views = [
-  { id: 1, viewNumber: 1, viewName: "review 1" },
-  { id: 2, viewNumber: 2, viewName: "review 2" },
-];
+import React, { Suspense } from "react";
+import Loading from "@/app/products/loading";
 
 const Products = () => {
-  return (
-    <div>
-      {views.map((view) => (
-        <li key={view.id}>
-          <Link
-            href={`/products/1/reviews/${view.viewNumber}`}
-            replace
-            prefetch
-            scroll
-          >
-            {view.viewName}
-          </Link>
-        </li>
-      ))}
-    </div>
-  );
+    return (
+        <div>
+            <h1>All products</h1>
+            <Suspense fallback={<Loading />}>
+                <ProductList />
+            </Suspense>
+        </div>
+    );
+};
+
+const ProductList = async (): Promise<React.ReactNode> => {
+    let data: { id: number; title: string }[] | null = null;
+    let error = null;
+
+    try {
+      const res = await fetch(`https://fakestoreapi.com/products`);
+
+      if (!res.ok) return <p>An error occured in fetching data...</p>;
+
+      data= await res.json();
+    }
+    catch (err) {
+      error = err;
+    }
+
+    if (data === null) return <p>no data found</p>
+    if (error) return <p>you have error</p>
+
+    return (
+        <React.Fragment>
+            {data.map((product) => (
+                <li key={product.id}>
+                    <Link
+                        href={`/products/${product?.id}`}
+                        replace={false}
+                        prefetch
+                        scroll
+                    >
+                        {product?.title}
+                    </Link>
+                </li>
+            ))}
+        </React.Fragment>
+    );
 };
 
 export default Products;
